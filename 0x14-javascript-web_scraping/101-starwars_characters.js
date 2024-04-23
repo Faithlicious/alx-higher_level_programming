@@ -1,8 +1,9 @@
 #!/usr/bin/node
+
 const request = require('request');
 
-const movieId = parseInt(process.argv[2], 10);
-const apiUrl = 'https://swapi.dev/api/films/';
+const movieId = process.argv[2];
+const apiUrl = `https://swapi.dev/api/films/${movieId}/`;
 
 request(apiUrl, function (error, response, body) {
   if (error) {
@@ -15,16 +16,16 @@ request(apiUrl, function (error, response, body) {
     return;
   }
 
-  const filmsData = JSON.parse(body);
-  const film = filmsData.results.find(film => film.episode_id === movieId);
+  const filmData = JSON.parse(body);
+  const charactersUrls = filmData.characters;
 
-  if (!film) {
-    console.error('Movie with ID', movieId, 'not found.');
-    return;
-  }
+  // Function to fetch character names and print them
+  function fetchAndPrintCharacter(index) {
+    if (index >= charactersUrls.length) {
+      return;
+    }
 
-  const charactersUrls = film.characters;
-  charactersUrls.forEach(characterUrl => {
+    const characterUrl = charactersUrls[index];
     request(characterUrl, function (error, response, body) {
       if (error) {
         console.error('Error:', error);
@@ -38,7 +39,13 @@ request(apiUrl, function (error, response, body) {
 
       const characterData = JSON.parse(body);
       console.log(characterData.name);
+
+      // Fetch next character recursively
+      fetchAndPrintCharacter(index + 1);
     });
-  });
+  }
+
+  // Start fetching characters
+  fetchAndPrintCharacter(0);
 });
 
